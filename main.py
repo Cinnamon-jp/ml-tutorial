@@ -1,5 +1,7 @@
+import src.linear_regression
+
 def main():
-    print("Hello from ml!")
+    src.linear_regression.main()
 
 
 if __name__ == "__main__":
