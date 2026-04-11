@@ -1,7 +1,7 @@
-import src.linear_regression
+import src.single_linear_regression
 
 def main():
-    src.linear_regression.main()
+    src.single_linear_regression.main()
 
 
 if __name__ == "__main__":
