@@ -36,8 +36,15 @@ def main():
     print(df.head())
     x_data: jax.Array = jnp.array(df.iloc[:, 0].to_numpy())
     y_data: jax.Array = jnp.array(df.iloc[:, 1].to_numpy())
-    print(x_data)
-    print(y_data)
+    
+    # データの標準化（勾配爆発による NaN/inf の発生を防ぐため）
+    x_mean, x_std = jnp.mean(x_data), jnp.std(x_data)
+    y_mean, y_std = jnp.mean(y_data), jnp.std(y_data)
+    x_data = (x_data - x_mean) / x_std
+    y_data = (y_data - y_mean) / y_std
+
+    print("Normalized x_data:", x_data)
+    print("Normalized y_data:", y_data)
 
     # 乱数生成キーを作成
     key = jax.random.PRNGKey(42)
