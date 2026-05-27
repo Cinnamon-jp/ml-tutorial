@@ -1,72 +1,63 @@
-from jax import numpy as jnp
 import jax
+import jax.numpy as jnp
+import flax.nnx as nnx
+import optax
 import pandas as pd
 import seaborn as sns
 
-# 単回帰モデル (y = wx + b)
-def model(params: tuple[float, float], x: float) -> float:
-    w, b = params
-    return w * x + b
-
-# 損失関数 (平均二乗誤差: MSE)
-def loss_fn(params: tuple[float, float], x: float, y: float) -> float:
-    predictions = model(params, x)
-    return jnp.mean((predictions - y) ** 2)
-
-# パラメータ更新
-def update_params(params: tuple[float, float], x: float, y: float, learning_rate: float) -> tuple[float, float]:
-    # 損失関数を偏微分し、現在の params における勾配を得る
-    grads = jax.grad(loss_fn)(params, x, y)
-    
-    # 現在の重みとバイアス、計算された勾配を展開する
-    w, b = params
-    grad_w, grad_b = grads
-    
-    # 勾配降下法によってパラメータを更新する
-    new_w = w - learning_rate * grad_w
-    new_b = b - learning_rate * grad_b
-    
-    return (new_w, new_b)
-
 def main():
-    print("Linear regression module imported!")
-
     # CSVデータの読み込みと変数代入
     df = pd.read_csv("datasets/insurance.csv").iloc[:, [0, 6]]
     print(df.head())
-    x_data: jax.Array = jnp.array(df.iloc[:, 0].to_numpy())
-    y_data: jax.Array = jnp.array(df.iloc[:, 1].to_numpy())
+    # 入力と出力を (N, 1) の二次元形状に変形
+    x_data: jax.Array = jnp.array(df.iloc[:, 0].to_numpy())[:, None]
+    y_data: jax.Array = jnp.array(df.iloc[:, 1].to_numpy())[:, None]
     
-    # データの標準化（勾配爆発による NaN/inf の発生を防ぐため）
-    x_mean, x_std = jnp.mean(x_data), jnp.std(x_data)
-    y_mean, y_std = jnp.mean(y_data), jnp.std(y_data)
+    # データの標準化 (平均0, 分散1)
+    x_mean = x_data.mean()
+    x_std = x_data.std()
     x_data = (x_data - x_mean) / x_std
+    
+    y_mean = y_data.mean()
+    y_std = y_data.std()
     y_data = (y_data - y_mean) / y_std
+    
+    # モデル定義
+    class SingleLinearRegression(nnx.Module):
+        # 入出力次元の定義
+        def __init__(self, din: int, dout: int, rngs: nnx.Rngs):
+            self.linear = nnx.Linear(din, dout, rngs=rngs)
+            
+        # 順伝播の定義
+        def __call__(self, x):
+            return self.linear(x)
+    
+    rng = nnx.Rngs(0)
+    
+    model = SingleLinearRegression(din=1, dout=1, rngs=rng)
+    
+    tx = optax.sgd(learning_rate=0.1)
+    optimizer = nnx.Optimizer(model=model, tx=tx, wrt=nnx.Param)
+    
+    @nnx.jit
+    # 訓練ステップの定義
+    def train_step(model, optimizer, x, y) -> float:
+        # 損失関数の定義(平均二乗誤差)
+        def loss_fn(model) -> float:
+            return jnp.mean((model(x) - y) ** 2)
+        
+        loss, grad = nnx.value_and_grad(loss_fn)(model)
+        
+        optimizer.update(model, grad)
 
-    print("Normalized x_data:", x_data)
-    print("Normalized y_data:", y_data)
-
-    # 乱数生成キーを作成
-    key = jax.random.PRNGKey(42)
-    key, subkey = jax.random.split(key)
-    key_w, key_b = jax.random.split(subkey)
-
-    # 重みとバイアスをランダムに初期化
-    w = jax.random.normal(key_w, shape=())
-    b = jax.random.normal(key_b, shape=())
-    params = (w, b)
-
-    # ハイパーパラメータの設定
-    learning_rate = 0.01
-    epochs = 100
-
-    # 学習ループ
-    print("Starting training...")
-    for epoch in range(epochs):
-        params = update_params(params, x_data, y_data, learning_rate)
-        if (epoch + 1) % 10 == 0:
-            current_loss = loss_fn(params, x_data, y_data)
-            print(f"Epoch {epoch + 1}, Loss: {current_loss:.4f}")
+        return loss
+    
+    # 訓練ループの実行
+    for epoch in range(1, 101):
+        loss_value = train_step(model, optimizer, x_data, y_data)
+        
+        if epoch % 10 == 0:
+            print(f"Epoch {epoch}: Loss = {loss_value}")
 
 if __name__ == "__main__":
     main()
