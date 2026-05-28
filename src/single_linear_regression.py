@@ -1,3 +1,6 @@
+import os
+os.environ["JAX_PLATFORMS"] = "cpu"
+
 import jax
 import jax.numpy as jnp
 import flax.nnx as nnx
