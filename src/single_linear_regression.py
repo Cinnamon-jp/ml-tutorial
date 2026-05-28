@@ -7,11 +7,11 @@ import seaborn as sns
 
 def main():
     # CSVデータの読み込みと変数代入
-    df = pd.read_csv("datasets/insurance.csv").iloc[:, [0, 6]]
-    print(df.head())
+    testdata = pd.read_csv("datasets/testdata.csv")
+    # print(testdata.head())
     # 入力と出力を (N, 1) の二次元形状に変形
-    x_data: jax.Array = jnp.array(df.iloc[:, 0].to_numpy())[:, None]
-    y_data: jax.Array = jnp.array(df.iloc[:, 1].to_numpy())[:, None]
+    x_data: jax.Array = jnp.array(testdata.iloc[:, 0].to_numpy())[:, None]
+    y_data: jax.Array = jnp.array(testdata.iloc[:, 1].to_numpy())[:, None]
     
     # データの標準化 (平均0, 分散1)
     x_mean = x_data.mean()
@@ -32,7 +32,7 @@ def main():
         def __call__(self, x):
             return self.linear(x)
     
-    rng = nnx.Rngs(0)
+    rng = nnx.Rngs(42)
     
     model = SingleLinearRegression(din=1, dout=1, rngs=rng)
     
@@ -53,10 +53,10 @@ def main():
         return loss
     
     # 訓練ループの実行
-    for epoch in range(1, 101):
+    for epoch in range(50):
         loss_value = train_step(model, optimizer, x_data, y_data)
         
-        if epoch % 10 == 0:
+        if epoch == 0 or epoch % 5 == 0:
             print(f"Epoch {epoch}: Loss = {loss_value}")
 
 if __name__ == "__main__":
