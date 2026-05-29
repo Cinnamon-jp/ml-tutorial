@@ -21,3 +21,7 @@ dependencies = [
 dev = [
     "pyrefly>=1.0.0",
 ]
+
+[tool.pyrefly]
+disable-search-path-heuristics = true
+search-path = ["."]
