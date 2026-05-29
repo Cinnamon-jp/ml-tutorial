@@ -9,6 +9,29 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+# モデル定義
+class SingleLinearRegression(nnx.Module):
+    # 入出力次元の定義
+    def __init__(self, din: int, dout: int, rngs: nnx.Rngs):
+        self.linear = nnx.Linear(din, dout, rngs=rngs)
+        
+    # 順伝播の定義
+    def __call__(self, x):
+        return self.linear(x)
+
+@nnx.jit
+# 訓練ステップの定義
+def train_step(model, optimizer, x, y) -> float:
+    # 損失関数の定義(平均二乗誤差)
+    def loss_fn(model) -> float:
+        return jnp.mean((model(x) - y) ** 2)
+    
+    loss, grad = nnx.value_and_grad(loss_fn)(model)
+    
+    optimizer.update(model, grad)
+
+    return loss
+
 def main():
     # CSVデータの読み込みと変数代入
     testdata = pd.read_csv("datasets/testdata.csv")
@@ -26,35 +49,12 @@ def main():
     y_std: float = y_data.std()
     y_data = (y_data - y_mean) / y_std  # 配列の要素ごとに実行される
     
-    # モデル定義
-    class SingleLinearRegression(nnx.Module):
-        # 入出力次元の定義
-        def __init__(self, din: int, dout: int, rngs: nnx.Rngs):
-            self.linear = nnx.Linear(din, dout, rngs=rngs)
-            
-        # 順伝播の定義
-        def __call__(self, x):
-            return self.linear(x)
-    
     rng = nnx.Rngs(42)
     
     model = SingleLinearRegression(din=1, dout=1, rngs=rng)
     
     tx = optax.sgd(learning_rate=0.1)
     optimizer = nnx.Optimizer(model=model, tx=tx, wrt=nnx.Param)
-    
-    @nnx.jit
-    # 訓練ステップの定義
-    def train_step(model, optimizer, x, y) -> float:
-        # 損失関数の定義(平均二乗誤差)
-        def loss_fn(model) -> float:
-            return jnp.mean((model(x) - y) ** 2)
-        
-        loss, grad = nnx.value_and_grad(loss_fn)(model)
-        
-        optimizer.update(model, grad)
-
-        return loss
     
     # 訓練ループの実行
     for epoch in range(50):
