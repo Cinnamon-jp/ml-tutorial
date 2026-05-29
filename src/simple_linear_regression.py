@@ -10,7 +10,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # モデル定義
-class SingleLinearRegression(nnx.Module):
+class SimpleLinearRegression(nnx.Module):
     # 入出力次元の定義
     def __init__(self, din: int, dout: int, rngs: nnx.Rngs):
         self.linear = nnx.Linear(din, dout, rngs=rngs)
@@ -22,13 +22,13 @@ class SingleLinearRegression(nnx.Module):
 @nnx.jit
 # 訓練ステップの定義
 def train_step(
-    model: SingleLinearRegression,
+    model: SimpleLinearRegression,
     optimizer: nnx.Optimizer,
     x: jax.Array,
     y: jax.Array,
 ) -> jax.Array:
     # 損失関数の定義(平均二乗誤差)
-    def loss_fn(model: SingleLinearRegression) -> jax.Array:
+    def loss_fn(model: SimpleLinearRegression) -> jax.Array:
         return jnp.mean((model(x) - y) ** 2)
     
     loss, grad = nnx.value_and_grad(loss_fn)(model)
@@ -39,7 +39,7 @@ def train_step(
 
 def main():
     # CSVデータの読み込みと変数代入
-    testdata = pd.read_csv("datasets/testdata.csv")
+    testdata = pd.read_csv("datasets/simple_linear_regression_testdata.csv")
     # print(testdata.head())
     # 入力と出力を (N, 1) の二次元形状に変形
     x_data: jax.Array = jnp.array(testdata.iloc[:, 0].to_numpy())[:, None]
@@ -56,7 +56,7 @@ def main():
     
     rng = nnx.Rngs(42)
     
-    model = SingleLinearRegression(din=1, dout=1, rngs=rng)
+    model = SimpleLinearRegression(din=1, dout=1, rngs=rng)
     
     tx = optax.sgd(learning_rate=0.1)
     optimizer = nnx.Optimizer(model=model, tx=tx, wrt=nnx.Param)
@@ -102,15 +102,15 @@ def main():
     # モデルによる回帰直線をプロット
     plot_df_sorted = plot_df.sort_values(by='x')
     sns.lineplot(
-        data=plot_df_sorted, 
-        x='x', 
-        y='y_pred', 
-        label='Regression Line', 
-        color='crimson', 
+        data=plot_df_sorted,
+        x='x',
+        y='y_pred',
+        label='Regression Line',
+        color='crimson',
         linewidth=2.5
     )
     
-    plt.title('Single Linear Regression Result (Flax NNX)', fontsize=14)
+    plt.title('Simple Linear Regression Result (Flax NNX)', fontsize=14)
     plt.xlabel('x', fontsize=12)
     plt.ylabel('y', fontsize=12)
     plt.legend()
@@ -118,7 +118,7 @@ def main():
     # 保存ディレクトリの作成と画像の保存
     output_dir = "results"
     os.makedirs(output_dir, exist_ok=True)
-    plot_path = os.path.join(output_dir, "single_linear_regression_result.png")
+    plot_path = os.path.join(output_dir, "simple_linear_regression_result.png")
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close()
     
