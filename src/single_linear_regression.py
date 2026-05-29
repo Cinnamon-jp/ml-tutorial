@@ -21,9 +21,14 @@ class SingleLinearRegression(nnx.Module):
 
 @nnx.jit
 # 訓練ステップの定義
-def train_step(model, optimizer, x, y) -> float:
+def train_step(
+    model: SingleLinearRegression,
+    optimizer: nnx.Optimizer,
+    x: jax.Array,
+    y: jax.Array,
+) -> jax.Array:
     # 損失関数の定義(平均二乗誤差)
-    def loss_fn(model) -> float:
+    def loss_fn(model: SingleLinearRegression) -> jax.Array:
         return jnp.mean((model(x) - y) ** 2)
     
     loss, grad = nnx.value_and_grad(loss_fn)(model)
@@ -41,12 +46,12 @@ def main():
     y_data: jax.Array = jnp.array(testdata.iloc[:, 1].to_numpy())[:, None]
     
     # データを 平均0, 分散1 に標準化
-    x_mean: float = x_data.mean()
-    x_std: float = x_data.std()
+    x_mean: jax.Array = x_data.mean()
+    x_std: jax.Array = x_data.std()
     x_data = (x_data - x_mean) / x_std  # 配列の要素ごとに実行される
     
-    y_mean: float = y_data.mean()
-    y_std: float = y_data.std()
+    y_mean: jax.Array = y_data.mean()
+    y_std: jax.Array = y_data.std()
     y_data = (y_data - y_mean) / y_std  # 配列の要素ごとに実行される
     
     rng = nnx.Rngs(42)
