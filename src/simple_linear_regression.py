@@ -12,11 +12,11 @@ import matplotlib.pyplot as plt
 # モデル定義
 class SimpleLinearRegression(nnx.Module):
     # 入出力次元の定義
-    def __init__(self, din: int, dout: int, rngs: nnx.Rngs):
+    def __init__(self, din: int, dout: int, rngs: nnx.Rngs) -> None:
         self.linear = nnx.Linear(din, dout, rngs=rngs)
         
     # 順伝播の定義
-    def __call__(self, x):
+    def __call__(self, x: jax.Array) -> jax.Array:
         return self.linear(x)
 
 @nnx.jit
@@ -39,7 +39,7 @@ def train_step(
 
 def main():
     # CSVデータの読み込みと変数代入
-    testdata = pd.read_csv("datasets/simple_linear_regression_testdata.csv")
+    testdata: pd.DataFrame = pd.read_csv("datasets/simple_linear_regression_testdata.csv")
     # print(testdata.head())
     # 入力と出力を (N, 1) の二次元形状に変形
     x_data: jax.Array = jnp.array(testdata.iloc[:, 0].to_numpy())[:, None]
@@ -62,8 +62,12 @@ def main():
     optimizer = nnx.Optimizer(model=model, tx=tx, wrt=nnx.Param)
     
     # 訓練ループの実行
+    epochs_list = []
+    losses_list = []
     for epoch in range(50):
         loss_value = train_step(model, optimizer, x_data, y_data)
+        epochs_list.append(epoch)
+        losses_list.append(float(loss_value))
         
         if epoch == 0 or epoch % 5 == 0:
             print(f"Epoch {epoch}: Loss = {loss_value}")
@@ -123,6 +127,33 @@ def main():
     plt.close()
     
     print(f"Regression plot successfully saved to {plot_path}")
+    
+    # 誤差(損失)をプロット
+    loss_df = pd.DataFrame({
+        'Epoch': epochs_list,
+        'Loss': losses_list
+    })
+    
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(
+        data=loss_df,
+        x='Epoch',
+        y='Loss',
+        label='Loss',
+        color='purple',
+        marker='o',
+        linewidth=2
+    )
+    plt.title('Loss History', fontsize=14)
+    plt.xlabel('Epoch', fontsize=12)
+    plt.ylabel('Loss', fontsize=12)
+    plt.legend()
+    
+    loss_plot_path = os.path.join(output_dir, "simple_linear_regression_loss.png")
+    plt.savefig(loss_plot_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    print(f"Loss plot successfully saved to {loss_plot_path}")
 
 if __name__ == "__main__":
     main()
