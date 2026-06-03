@@ -41,7 +41,7 @@ def train_step(
     return loss
 
 
-def main():
+def main() -> None:
     # CSVデータの読み込みと変数代入
     testdata: pd.DataFrame = pd.read_csv(
         "datasets/simple_linear_regression_testdata.csv"
