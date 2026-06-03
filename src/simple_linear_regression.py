@@ -151,6 +151,16 @@ def main():
 
     print(f"Loss plot successfully saved to {loss_plot_path}")
 
+    # 訓練済みの重みとバイアスを出力
+    print("\n--- Trained Parameters ---")
+    kernel = model.linear.kernel
+    bias_param = model.linear.bias
+    if kernel is not None and bias_param is not None:
+        weights = kernel[...]
+        bias = bias_param[...]
+        print(f"Weight: {float(weights[0, 0]):.6f}")
+        print(f"Bias: {float(bias[0]):.6f}")
+
 
 if __name__ == "__main__":
     main()
