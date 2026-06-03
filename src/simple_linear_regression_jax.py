@@ -55,14 +55,7 @@ def main():
     x_data: jax.Array = jnp.array(testdata.iloc[:, 0].to_numpy())[:, None]
     y_data: jax.Array = jnp.array(testdata.iloc[:, 1].to_numpy())[:, None]
 
-    # データを 平均0, 分散1 に標準化
-    x_mean: jax.Array = x_data.mean()
-    x_std: jax.Array = x_data.std()
-    x_data = (x_data - x_mean) / x_std  # 配列の要素ごとに実行される
 
-    y_mean: jax.Array = y_data.mean()
-    y_std: jax.Array = y_data.std()
-    y_data = (y_data - y_mean) / y_std  # 配列の要素ごとに実行される
 
     # PRNGキーの初期化
     key = jax.random.PRNGKey(42)
@@ -81,13 +74,13 @@ def main():
         if epoch == 0 or epoch % 5 == 0:
             print(f"Epoch {epoch}: Loss = {loss_value}")
 
-    # 予測値の計算 (標準化スケール)
+    # 予測値の計算
     y_pred: jax.Array = predict(params, x_data)
 
-    # 逆標準化して元のデータスケールに戻す
-    x_orig: jax.Array = (x_data * x_std) + x_mean
-    y_orig: jax.Array = (y_data * y_std) + y_mean
-    y_pred_orig: jax.Array = (y_pred * y_std) + y_mean
+    # 正規化を行わないため、元のデータスケールをそのまま使用
+    x_orig: jax.Array = x_data
+    y_orig: jax.Array = y_data
+    y_pred_orig: jax.Array = y_pred
 
     # プロット用の DataFrame を作成
     plot_df = pd.DataFrame(
