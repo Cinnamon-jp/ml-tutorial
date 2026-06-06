@@ -10,18 +10,17 @@ import matplotlib.pyplot as plt
 
 
 # モデルパラメータの初期化関数
-def init_params(rng_key: jax.Array, din: int, dout: int) -> dict[str, jax.Array]:
+def init_params(rng_key, din: int, dout: int) -> dict[str, jax.Array]:
     w_key, _ = jax.random.split(rng_key)
-    # flax.nnx.Linear のデフォルト初期化(LeCun Normal)に合わせる
-    # LeCun normal: variance = 1 / din. 今回 din=1 なので、std = 1.0 の標準正規分布
-    w = jax.random.normal(w_key, (din, dout))
-    b = jnp.zeros((dout,))
+
+    w: jax.Array = jax.random.normal(w_key, (din, dout))  # 正規分布で初期化
+    b: jax.Array = jnp.zeros((dout,))                     # 0で初期化
     return {"w": w, "b": b}
 
 
 # 順伝播の定義 (モデルの予測)
 def predict(params: dict[str, jax.Array], x: jax.Array) -> jax.Array:
-    return jnp.dot(x, params["w"]) + params["b"]
+    return jnp.dot(x, params["w"]) + params["b"]  # wx + b
 
 
 # 損失関数の定義(平均二乗誤差)
@@ -38,11 +37,18 @@ def train_step(
     y: jax.Array,
     lr: float = 0.1,
 ) -> tuple[dict[str, jax.Array], jax.Array]:
-    # 損失と勾配の計算
-    loss, grads = jax.value_and_grad(loss_fn)(params, x, y)
-    # 勾配降下法(SGD)によるパラメータの更新
-    params = jax.tree_util.tree_map(lambda p, g: p - lr * g, params, grads)
-    return params, loss
+    # 損失の計算
+    loss = loss_fn(params, x, y)
+    # 勾配の計算
+    grad_w = jax.grad(loss_fn)(params, x, y)
+    grad_b
+
+    # 勾配降下法によるパラメータの更新
+    new_params: dict[str, jax.Array] = {}
+    new_params["w"] = params["w"] - lr * grads["w"]
+    new_params["b"] = params["b"] - lr * grads["b"]
+
+    return new_params, loss
 
 
 def main() -> None:
@@ -54,8 +60,6 @@ def main() -> None:
     # 入力と出力を (N, 1) の二次元形状に変形
     x_data: jax.Array = jnp.array(testdata.iloc[:, 0].to_numpy())[:, None]
     y_data: jax.Array = jnp.array(testdata.iloc[:, 1].to_numpy())[:, None]
-
-
 
     # PRNGキーの初期化
     key = jax.random.PRNGKey(42)
