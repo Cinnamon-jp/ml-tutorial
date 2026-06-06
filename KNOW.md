@@ -10,6 +10,65 @@
   6. 現在の $w$ と $b$ から、勾配に学習率を掛けたものを引く(負の勾配: 値を増加させる, 正の勾配: 値を減少させる)。
   7. 2~6を繰り返し、4の勾配をできる限り0に近づける。
 
+### pythonコードテンプレート
+```python
+# ライブラリインポート
+import os
+os.environ["JAX_PLATFORMS"] = "cpu" # 環境変数設定
+import jax
+import jax.numpy as jnp
+import flax.nnx as nnx
+import optax
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+...
+
+# モデル定義
+class ~~~(nnx.Module):
+    def __init__:
+        # モデル形状定義
+
+    def __call__:
+        # 順伝播の定義
+
+# 学習ループの定義
+@nnx.jit
+def train_step(
+    model: ~~~,
+    optimizer: ~~~,
+    ...
+):
+    # 損  失関数の定義
+    def loss_fn(model: ~~~) -> ~~~:
+        return ~~~
+    
+    # 損失と勾配計算
+    loss, grad = nnx.value_and_grad(loss_fn)(model)
+
+    # モデルのパラメータ更新
+    optimizer.update(model, grad)
+
+    return loss
+
+# main関数
+def main():
+    # データ読み込み
+    # データ正規化
+
+    # 乱数シード初期化
+    rng = nnx.Rngs(~~~)
+
+    # モデル初期化
+    model = ~~~(din=~~~, dout=~~~, rngs=rng)
+    
+    # ハイパーパラメータ設定
+    epoch = ~~~
+    learning_rate = ~~~
+    
+    
+```
+
 ## パラメータ
 ### 損失関数
 - **平均二乗誤差** (MSE, L2_Loss): 基本的。外れ値に影響されやすい。
