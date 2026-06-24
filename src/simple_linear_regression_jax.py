@@ -14,7 +14,7 @@ def init_params(rng_key, din: int, dout: int) -> dict[str, jax.Array]:
     w_key, _ = jax.random.split(rng_key)
 
     w: jax.Array = jax.random.normal(w_key, (din, dout))  # 正規分布で初期化
-    b: jax.Array = jnp.zeros((dout,))                     # 0で初期化
+    b: jax.Array = jnp.zeros((dout,))  # 0で初期化
     return {"w": w, "b": b}
 
 
@@ -40,8 +40,7 @@ def train_step(
     # 損失の計算
     loss = loss_fn(params, x, y)
     # 勾配の計算
-    grad_w = jax.grad(loss_fn)(params, x, y)
-    grad_b
+    grads = jax.grad(loss_fn)(params, x, y)
 
     # 勾配降下法によるパラメータの更新
     new_params: dict[str, jax.Array] = {}
